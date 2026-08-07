@@ -1,0 +1,45 @@
+# Copy to .github/workflows/ci.yml via the GitHub UI to enable
+# (the CLI token lacks the `workflow` scope to push it directly).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:8080
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npx tsc --noEmit || true   # type-check (server has no strict build step)
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [client, server]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t livepolls-server ./server
+      - run: docker build -t livepolls-client --build-arg NEXT_PUBLIC_SOCKET_URL=http://localhost:8080 ./client

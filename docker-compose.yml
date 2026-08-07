@@ -1,0 +1,40 @@
+# Local run: Redis (for the server's socket.io pub/sub) + realtime server + Next.js client.
+#   cp .env.example .env   # fill in the Upstash values the client needs
+#   docker compose up --build
+#
+# Note: the server uses a plain Redis (ioredis) for pub/sub — provided here.
+# The client's server actions use Upstash Redis (REST) for topic/comment storage,
+# which is a hosted service — set UPSTASH_* in .env to a (free) Upstash instance.
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  server:
+    build: ./server
+    environment:
+      PORT: "8080"
+      REDIS_CONNECTION_STRING: redis://redis:6379
+      CLIENT_ORIGIN: http://localhost:3000
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  client:
+    build:
+      context: ./client
+      args:
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:8080}
+    environment:
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"

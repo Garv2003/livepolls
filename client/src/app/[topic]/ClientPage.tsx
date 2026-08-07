@@ -16,7 +16,7 @@ interface ClientPageProps {
   initialData: { text: string; value: number }[];
 }
 
-const socket = io("http://localhost:8080");
+const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:8080");
 
 const COLORS = ["#143059", "#2F6B9A", "#82a6c2"];
 

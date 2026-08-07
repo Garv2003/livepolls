@@ -1,0 +1,40 @@
+# Render Blueprint. New → Blueprint → this repo. Set the Upstash + socket URL
+# vars in the dashboard (marked sync:false). The server's Redis is provisioned here.
+services:
+  # Realtime socket.io server (Docker) + its Redis pub/sub
+  - type: web
+    name: livepolls-server
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: free
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: REDIS_CONNECTION_STRING
+        fromService:
+          type: keyvalue
+          name: livepolls-redis
+          property: connectionString
+      - key: CLIENT_ORIGIN
+        sync: false        # set to the deployed client URL
+
+  # Next.js client (Docker)
+  - type: web
+    name: livepolls-client
+    runtime: docker
+    dockerfilePath: ./client/Dockerfile
+    dockerContext: ./client
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_SOCKET_URL
+        sync: false        # set to the deployed livepolls-server URL (build-time)
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+
+# Redis for the server's socket.io pub/sub
+keyValue:
+  - name: livepolls-redis
+    plan: free
