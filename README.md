@@ -34,7 +34,24 @@ cd server && npm install && npm start        # socket.io + Redis bridge
 cd client && npm install && npm run dev       # Next.js app
 ```
 
-Set the Redis (Upstash) connection env vars for both sides.
+Set the env vars for both sides — see `.env.example`.
+
+## Deploy
+
+**Local / any Docker host** — `cp .env.example .env`, fill in the Upstash creds, then
+`docker compose up --build`. Runs Redis (server pub/sub) + the socket.io server (:8080) + the
+Next.js client (:3000).
+
+**Render (one blueprint)** — [`render.yaml`](render.yaml): *New → Blueprint → this repo*. It
+provisions a Redis (key-value) for the server plus Docker web services for the server and client.
+Set in the dashboard: `NEXT_PUBLIC_SOCKET_URL` (→ deployed server URL), `CLIENT_ORIGIN` (→ deployed
+client URL), and `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (a free Upstash instance the
+client's server actions use for storage).
+
+CI is provided at [`deploy/ci.yml.example`](deploy/ci.yml.example) — copy it to
+`.github/workflows/ci.yml` via the GitHub UI to enable it.
+
+> Socket URL and CORS origin are now env-driven (were hardcoded to localhost).
 
 ## Project structure
 

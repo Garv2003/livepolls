@@ -12,9 +12,13 @@ const redis = new Redis(process.env.REDIS_CONNECTION_STRING)
 const subRedis = new Redis(process.env.REDIS_CONNECTION_STRING)
 
 const server = http.createServer(app)
+const clientOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:3000")
+    .split(",")
+    .map((o) => o.trim())
+
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:3000"],
+        origin: clientOrigins,
         methods: ["GET", "POST"],
         credentials: true,
     },
